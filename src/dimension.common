@@ -1,0 +1,19 @@
+
+c    --------------------------------------------------------------------------
+c
+c      Array sizes
+c
+       integer nmaxmodel,nmaxcharfile,nmaxspec,nmaxcharspec,nmaxelem,
+     # nmaxcondensed,nmaxeqt,nmaxelemxs,nmaxapt,nmaxtemp_therm
+
+       parameter(nmaxmodel=10000)                  ! Maximum number of models requested in ace.inp
+       parameter(nmaxcharfile=80)                  ! Maximum number of characters for input/output files names
+       parameter(nmaxspec=2000)                    ! Maximum number of species
+       parameter(nmaxcharspec=15)                  ! Maximum number of characters for species
+       parameter(nmaxelem=72)                      ! Maximum number of elements
+       parameter(nmaxcondensed=200)                ! Maximum number of condensed species
+       parameter(nmaxeqt=nmaxelem+nmaxcondensed+2) ! Maximum number of Newton-Raphson equations
+       parameter(nmaxelemxs=10)                    ! Maximum number of different elements in one species
+       parameter(nmaxapt=10000)                    ! Maximum number of (p,T) points
+       parameter(nmaxtemp_therm=10)                ! Maximum number of temperature ranges for therm coefficients
+

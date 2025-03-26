@@ -1,0 +1,4 @@
+agb.apt                         ! (p,T) profile file
+species_gas_c-type.spec         ! species file name
+species.therm                   ! therm file name
+

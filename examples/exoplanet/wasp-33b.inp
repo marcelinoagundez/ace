@@ -1,0 +1,4 @@
+wasp-33b.apt                    ! (p,T) profile file
+species_hconspsiti.spec         ! species file name
+species.therm                   ! therm file name
+

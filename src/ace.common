@@ -1,0 +1,191 @@
+c
+       implicit none
+c
+c      Include array dimensions
+c
+       include 'dimension.common'
+
+c    --------------------------------------------------------------------------
+c
+c      Physical constants
+c
+       real*8 kboltz,pi,amu,navg
+
+       parameter(kboltz=1.380649d-16)       ! Boltzmann constant           [erg/K]
+       parameter(pi=3.141592653589793d0)    ! pi number 
+       parameter(amu=1.66053906660d-24)     ! atomic mass unit             [g]
+       parameter(navg=6.02214076d23)        ! Avogadro number              [mol-1]
+
+c    --------------------------------------------------------------------------
+c
+c      Numerical and generic parameters
+c
+       integer nmaxit,nminit,nmaxition,nspecxfile
+       real*8 tiny,huge,abunmin
+
+       parameter(nmaxit=100)         ! maximum number of Newton-Raphson iterations
+       parameter(nminit=5)           ! minimum number of Newton-Raphson iterations
+       parameter(nmaxition=100)      ! maximum number of ion iterations
+       parameter(nspecxfile=1000)    ! number of species per output file
+       parameter(tiny=1.0d-50)       ! tiny number
+       parameter(huge=1.0d+50)       ! huge number
+       parameter(abunmin=1.0d-99)    ! minimum molar fraction to write out
+
+       integer neqt,npilag
+       real*8 b0(nmaxeqt),b0max,b0min,pilag(nmaxeqt-1),dlnn,
+     # dnc(nmaxspec)
+       logical converge
+
+c      neqt:      number of conservation equations (nelem or nelem+1 if ionic species)
+c      npilag:    number of pi Lagrange multipliers
+c      b0:        conservation term for each element                      [mol/g mixture]
+c               + conservation term for charge if ions present
+c      b0max:     maximum b0 among all included elements                  [mol/g mixture]
+c      b0min:     minimum b0 among all included elements                  [mol/g mixture]
+c      pilag:     pi lagrange multiplier
+c      dlnn:      variation of Ln(abuntot) among succesive iterations
+c      dnc:       variation of abun(condensed) among succesive iterations [mol/g mixture]
+c      converge:  convergence reached in Gibbs energy minimization?
+
+       common/inumeric/neqt,npilag
+       common/rnumeric/b0,b0max,b0min,pilag,dlnn,dnc
+       common/lnumeric/converge
+
+c    --------------------------------------------------------------------------
+c
+c      Model parameters
+c
+       integer napt,iapt
+       logical ion,init
+
+c      napt:       number of (T,p) points
+c      iapt:       current (T,p) point
+c      ion:       .true.(.false.) = there are (not) charged species
+c      init:      .true. = initialize; .false. = inside calculation
+
+       common/imodel/napt,iapt
+       common/lmodel/ion,init
+
+c    --------------------------------------------------------------------------
+c
+c      Element parameters
+c
+       integer nelem,ilenelem(nmaxelem),zat(nmaxelem)
+       real*8 elfab(nmaxelem),mat(nmaxelem)
+       character*2 elem(nmaxelem)
+
+c      nelem:    number of elements
+c      ilenelem: number of characters of element name
+c      zat:      atomic number Z of each element
+c      elfab:    input elemental abundance                                [relative abundance]
+c      mat:      atomic mass of each element                              [amu]
+c      elem:     element name
+
+       common/ielem/nelem,ilenelem,zat
+       common/relem/elfab,mat
+       common/celem/elem
+
+c    --------------------------------------------------------------------------
+c
+c      Species parameters
+c
+       integer nspec,charge(nmaxspec),nattot(nmaxspec),
+     # nat(nmaxspec,nmaxelem),idzat(nmaxspec,nmaxelem),
+     # ilenspec(nmaxspec),id_electr,ngas,ncondensed
+       real*8 abun(nmaxspec+4),abunmax(nmaxspec),abuntot,
+     # mu(nmaxspec)
+       character*(nmaxcharspec) spec(nmaxspec)
+       logical condensed(nmaxspec)
+
+c      nspec:       number of species 
+c      charge:      species electrostatic charge 
+c      nattot:      total number of atoms for each species 
+c      nat(i,j):    number of atoms of element j in species i 
+c      idzat(i,j):  atomic number Z of element j in species i 
+c      ilenspec:    number of characters of species name 
+c      id_electr:   species identifier for electron 
+c      ngas:        number of gas phase species 
+c      ncondensed:  number of condensed species 
+c      abun:        species abundance                                       [mol/g mixture]
+c      abunmax:     maximum species abundance                               [mol/g mixture]
+c      abuntot:     total abundance of all species                          [mol/g mixture]
+c      mu:          chemical potential of each species divided by RT
+c      spec:        species name
+c      condensed:   true = condensed species, false = gas species
+
+       common/ispec/nspec,charge,nattot,nat,idzat,ilenspec,id_electr,
+     # ngas,ncondensed
+       common/rspec/abun,abunmax,abuntot,mu
+       common/cspec/spec
+       common/lspec/condensed
+
+c    --------------------------------------------------------------------------
+c
+c      Therm parameters
+c
+       integer type_therm(nmaxspec),natherm(nmaxspec),
+     # ntemp_therm(nmaxspec)
+       real*8 atherm(nmaxspec,9,nmaxtemp_therm),
+     # temp_therm(nmaxspec,nmaxtemp_therm+1)
+       logical spec_tkout(nmaxspec),spec_warning(nmaxspec)
+
+c      type_therm:  type of NASA polynomial therm data for each species
+c      natherm:     number of NASA polynomial coefficients, usually 7 or 9
+c      ntemp_therm: number of temperature ranges of NASA polynomials
+c      atherm:      NASA polynomial coefficients for each species
+c      temp_therm:  temperature at edges of temperature ranges for NASA polynomials
+c      spec_tkout:  true if NASA polynomials used outside valid temperature range
+c      spec_warning:same as above to avoid giving a warning for every calculation point
+
+       common/itherm/type_therm,natherm,ntemp_therm
+       common/rtherm/atherm,temp_therm
+       common/ltherm/spec_tkout,spec_warning
+
+c    --------------------------------------------------------------------------
+c
+c      Physical parameters
+c
+       real*8 altitude,pressure,tk,a_apt(nmaxapt),p_apt(nmaxapt),
+     # t_apt(nmaxapt)
+
+c      altitude: atmospheric altitude                                     [km]
+c      pressure: gas pressure                                             [bar]
+c      tk:       gas kinetic temperature                                  [K]         
+c      a_apt:    array of altitude points                                 [km]         
+c      p_apt:    array of pressure points                                 [bar]         
+c      t_apt:    array of temperature points                              [K]         
+
+       common/rphys/altitude,pressure,tk,a_apt,p_apt,t_apt
+
+c    --------------------------------------------------------------------------
+c
+c      Input/Output files
+c
+       integer ncharmodel,noutfile
+       character*(nmaxcharfile) inpfile,namemodel,specfile,thermfile,
+     # aptfile
+
+c      ncharmodel:   number of characters of the name of each model (inpfile without extension)
+c      noutfile:     number of output files
+c      inpfile:      input file for each model
+c      namemodel:    name of each model (inpfile without extension)
+c      specfile:     species file
+c      thermfile:    therm file
+c      aptfile:      (p,T) file
+
+       common/iiounits/ncharmodel,noutfile
+       common/ciounits/inpfile,namemodel,specfile,thermfile,aptfile
+
+c    --------------------------------------------------------------------------
+c
+c      Input/Output units
+c
+c      unit=5     ! standar fortran input unit (read from screen)
+c      unit=6     ! standar fortran output unit (write on screen)
+c                 ! replaced in the subroutines by *                   
+c      unit=1     ! input unit assigned to main input file of ace: 'ace.inp'
+c                 ! open during all the execution of ace program
+c      unit=2     ! input unit assigned to input file of each model
+c      unit=3     ! input unit assigned to (p,T), species, and therm files
+c      unit=8     ! output unit assigned to .zab file (input for PAC program)
+c      unit=9-20  ! output units assigned to results
