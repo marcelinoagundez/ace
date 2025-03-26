@@ -7,10 +7,10 @@
   The code can be typically used to compute the chemical equilibrium composition in atmospheres of
   AGB stars, brown dwarfs, and exoplanets.
 
-  The code is based on the algorithm implemented in the NASA/CEA program (Gordon & McBride 1994, NASA Reference Publication 1311, 1).
+  The code is based on the algorithm implemented in the NASA/CEA program [Gordon & McBride 1994, NASA Reference Publication 1311, 1](https://ntrs.nasa.gov/api/citations/19950013764/downloads/19950013764.pdf).
 
 # If you use ACE for your work, I would appreciate if you cite the papers
-   - Agundez et al. 2020, A&A, 637, A59
+   - [Agundez et al. 2020, A&A, 637, A59](https://www.aanda.org/articles/aa/full_html/2020/05/aa37496-20/aa37496-20.html)
    - Agundez 2025, A&A, submitted
 
 # Inquiries can be sent to marcelino.agundez@csic.es
