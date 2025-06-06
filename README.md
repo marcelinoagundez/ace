@@ -4,8 +4,7 @@
    - elemental composition
    - pressure-temperature profile
 
-  The code can be typically used to compute the chemical equilibrium composition in atmospheres of
-  AGB stars, brown dwarfs, and exoplanets.
+  The code can be typically used to compute the chemical equilibrium composition in atmospheres of AGB stars, brown dwarfs, and exoplanets.
 
   ACE is based on the algorithm implemented in the NASA/CEA program, which is described in [Gordon & McBride 1994, NASA Reference Publication 1311, 1](https://ntrs.nasa.gov/api/citations/19950013764/downloads/19950013764.pdf).
 
@@ -31,7 +30,6 @@
 `$ make clean`       (only needed if the code has been compiled previously)
 
 `$ make`
-
 
   This should have created a binary file named `ace`.
   It is convenient to move the binary file to the local directory of your system `bin` where binaries are located.
