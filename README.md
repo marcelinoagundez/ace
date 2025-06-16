@@ -10,7 +10,7 @@
 
 ### If you use ACE for your work, I would appreciate if you cite the papers
    - [Agúndez et al. 2020, A&A, 637, A59](https://www.aanda.org/articles/aa/full_html/2020/05/aa37496-20/aa37496-20.html)
-   - Agúndez 2025, A&A, in press
+   - [Agúndez 2025, A&A, in press, arXiv:2506.11658](https://arxiv.org/abs/2506.11658)
 
 ### Inquiries can be sent to marcelino.agundez@csic.es
 
